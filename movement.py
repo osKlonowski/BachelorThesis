@@ -50,7 +50,7 @@ lines = lines[:-1]
 for line in lines:
     line = line.strip()
     columns = line.split()
-    print(columns)
+    # print(columns)
     for i in range(0, len(columns), 2):
         table = PairsMovement(columns[i], columns[i+1])
         listOfRounds.append(table)

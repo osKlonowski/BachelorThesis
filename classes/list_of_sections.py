@@ -4,3 +4,6 @@ class ListOfSections:
 
     def addSection(self, section):
         self.sections.append(section)
+
+    def getSection(self, id):
+        return self.sections[id]

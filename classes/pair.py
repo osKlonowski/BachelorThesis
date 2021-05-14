@@ -1,5 +1,6 @@
 class Pair:
     def __init__(self, player1, player2):
+        self.id = 0
         self.player1 = player1
         self.player2 = player2
         self.players = [player1, player2]
@@ -14,3 +15,6 @@ class Pair:
 
     def setPairWaitingTables(self, waiting):
         self.total_waiting = int(waiting)
+
+    def setPairId(self, id):
+        self.id = id

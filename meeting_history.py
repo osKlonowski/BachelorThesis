@@ -40,10 +40,10 @@ def each_chunk(stream, separator):
                 yield part
 
 
-with open(meeting_history_file) as myFile:
-    for chunk in each_chunk(myFile, separator=']'):
-        if(chunk != ''):
-            split_user_record(chunk)
+# with open(meeting_history_file) as myFile:
+#     for chunk in each_chunk(myFile, separator=']'):
+#         if(chunk != ''):
+#             split_user_record(chunk)
 
 # print(listPlayers.getNumOfPlayers())
 # listPlayers.sortPlayers()

@@ -13,6 +13,11 @@ class ListOfPlayers:
         self.players.sort()
         return self.players
 
+    def getPlayerById(self, idd):
+        for player in self.players:
+            if(player.id == idd):
+                return player
+
     def getPlayerRating(self, playerId):
         return next((float(player.rating)
                      for player in self.players if player.id == playerId), None)
