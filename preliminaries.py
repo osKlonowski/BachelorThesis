@@ -40,45 +40,45 @@ import pandas as pd
 
 ######## SORT By COMBINED PAIR RATING #########
 
-meeting_history_file = 'bridge_schedules/data2021_pre_balanced/meeting history april 2021'
-pre_schedule_file = 'bridge_schedules/data2021_pre_balanced/48 pairs_(3 sections,no_waiting_table)'
+# meeting_history_file = 'bridge_schedules/data2021_pre_balanced/meeting history april 2021'
+# pre_schedule_file = 'bridge_schedules/data2021_pre_balanced/48 pairs_(3 sections,no_waiting_table)'
 
-listPlayers = deconstructMeetingHistoryFile(meeting_history_file)
-listPairs = deconstructRegisteredPairs(pre_schedule_file)
+# listPlayers = deconstructMeetingHistoryFile(meeting_history_file)
+# listPairs = deconstructRegisteredPairs(pre_schedule_file)
 
-for pair in listPairs.pairs:
-    ratingSum = float(0.0)
-    for player in pair.players:
-        rating = listPlayers.getPlayerRating(player)
-        ratingSum += float(rating)
-    pair.setPairRating(ratingSum)
+# for pair in listPairs.pairs:
+#     ratingSum = float(0.0)
+#     for player in pair.players:
+#         rating = listPlayers.getPlayerRating(player)
+#         ratingSum += float(rating)
+#     pair.setPairRating(ratingSum)
 
-for pair in listPairs.pairs:
-    total_waiting_tables = int(0)
-    for player in pair.players:
-        waiting = listPlayers.getPlayerWaitingTables(player)
-        total_waiting_tables += waiting
-    pair.setPairWaitingTables(total_waiting_tables)
+# for pair in listPairs.pairs:
+#     total_waiting_tables = int(0)
+#     for player in pair.players:
+#         waiting = listPlayers.getPlayerWaitingTables(player)
+#         total_waiting_tables += waiting
+#     pair.setPairWaitingTables(total_waiting_tables)
 
-# print(listPairs.sortPairsByRating())
-listPairs.sortPairsByRating()
-listPairs.setPairIds()
+# # print(listPairs.sortPairsByRating())
+# listPairs.sortPairsByRating()
+# listPairs.setPairIds()
 
-######## SPLIT INTO SECTIONS ##########
+# ######## SPLIT INTO SECTIONS ##########
 
-listSections = ListOfSections()
+# listSections = ListOfSections()
 
-result = np.array_split(listPairs.pairs, 3)
-for section in result:
-    # print(len(section))
-    listSections.addSection(Section(section))
+# result = np.array_split(listPairs.pairs, 3)
+# for section in result:
+#     # print(len(section))
+#     listSections.addSection(Section(section))
 
-######### CREATE MEETING MATRIX #########
-#########    FOR EACH SECTION   #########
+# ######### CREATE MEETING MATRIX #########
+# #########    FOR EACH SECTION   #########
 
-#### FUNCTION TO CALCULATE THE NUM OF MEETINGS BETWEEN PAIRS ########
-# for pairs (A,B) and (C,D), we add up the number of meetings among A-C, A-D, B-C, and B-D
-# to compute the total number of previous meetings among them
+# #### FUNCTION TO CALCULATE THE NUM OF MEETINGS BETWEEN PAIRS ########
+# # for pairs (A,B) and (C,D), we add up the number of meetings among A-C, A-D, B-C, and B-D
+# # to compute the total number of previous meetings among them
 
 
 def getListOfPairIDs(pairs):
@@ -88,7 +88,7 @@ def getListOfPairIDs(pairs):
     return list
 
 
-def pairsMeetingCount(pair1id, pair2id):
+def pairsMeetingCount(listPairs, listPlayers, pair1id, pair2id):
     # Get pairs by id
     pair1 = listPairs.getPairById(pair1id)
     pair2 = listPairs.getPairById(pair2id)
@@ -111,25 +111,93 @@ def pairsMeetingCount(pair1id, pair2id):
 
 
 #### FOR EACH SECTION ####
-for section in listSections.sections:
-    ##### MEETINGS MATRIX ##########
-    pairIds = getListOfPairIDs(section.pairs)
-    section.setListPairIds(pairIds)
-    # GET List of Pair IDS for pd.DataFrame Construction
-    series_rows = pd.Series(section.listPairIds)
-    series_cols = pd.Series(section.listPairIds)
-    # CREATE DATA-FRAME BASED ON COMBINED MEETINGS
-    df = pd.DataFrame(series_rows.apply(
-        lambda x: series_cols.apply(lambda y: pairsMeetingCount(x, y))))
-    df.index = series_rows
-    df.columns = series_cols
-    ### SET SECTION MATRIX ###
-    section.assignMeetingsMatrix(df)
-    ##### WAITING TABLES VECTOR #######
-    vector = np.array([pair.total_waiting for pair in section.pairs])
-    section.assignWaitingVector(vector)
+# for section in listSections.sections:
+#     ##### MEETINGS MATRIX ##########
+#     pairIds = getListOfPairIDs(section.pairs)
+#     section.setListPairIds(pairIds)
+#     # GET List of Pair IDS for pd.DataFrame Construction
+#     series_rows = pd.Series(section.listPairIds)
+#     series_cols = pd.Series(section.listPairIds)
+#     # CREATE DATA-FRAME BASED ON COMBINED MEETINGS
+#     df = pd.DataFrame(series_rows.apply(
+#         lambda x: series_cols.apply(lambda y: pairsMeetingCount(x, y))))
+#     df.index = series_rows
+#     df.columns = series_cols
+#     ### SET SECTION MATRIX ###
+#     section.assignMeetingsMatrix(df)
+#     ##### WAITING TABLES VECTOR #######
+#     vector = np.array([pair.total_waiting for pair in section.pairs])
+#     section.assignWaitingVector(vector)
 
-#### DISPLAYS COMPLETED MEETINGS MATRIX BETWEEN PAIRS + SECTION WAITING VECTOR #####
-for section in listSections.sections:
-    print(section.meetings_matrix)
-    print(section.waiting_vector)
+
+def printResults(listSections):
+    #### DISPLAYS COMPLETED MEETINGS MATRIX BETWEEN PAIRS + SECTION WAITING VECTOR #####
+    for section in listSections.sections:
+        print(section.meetings_matrix)
+        print(section.waiting_vector)
+
+
+def createMeetingsMatrix(listSections, listPlayers, listPairs):
+    for section in listSections.sections:
+        ##### MEETINGS MATRIX ##########
+        pairIds = getListOfPairIDs(section.pairs)
+        section.setListPairIds(pairIds)
+        # GET List of Pair IDS for pd.DataFrame Construction
+        series_rows = pd.Series(section.listPairIds)
+        series_cols = pd.Series(section.listPairIds)
+        # CREATE DATA-FRAME BASED ON COMBINED MEETINGS
+        df = pd.DataFrame(series_rows.apply(
+            lambda x: series_cols.apply(lambda y: pairsMeetingCount(listPairs, listPlayers, x, y))))
+        df.index = series_rows
+        df.columns = series_cols
+        ### SET SECTION MATRIX ###
+        section.assignMeetingsMatrix(df)
+    return listSections
+
+
+def createWaitingTablesVector(listSections):
+    for section in listSections.sections:
+        ##### WAITING TABLES VECTOR #######
+        vector = np.array([pair.total_waiting for pair in section.pairs])
+        section.assignWaitingVector(vector)
+    return listSections
+
+
+def splitIntoSections(listPairs, numOfSections):
+    listSections = ListOfSections()
+    # TODO: The number of sections here should be determined some other way???
+    result = np.array_split(listPairs.pairs, numOfSections)
+    for section in result:
+        print(f'Num Of Pairs in Section: {len(section)}')
+        listSections.addSection(Section(section))
+    return listSections
+
+
+def calcualteTotalRaitingsAndWaitingTables(listPairs, listPlayers):
+    for pair in listPairs.pairs:
+        ratingSum = float(0.0)
+        for player in pair.players:
+            rating = listPlayers.getPlayerRating(player)
+            ratingSum += float(rating)
+        pair.setPairRating(ratingSum)
+    for pair in listPairs.pairs:
+        total_waiting_tables = int(0)
+        for player in pair.players:
+            waiting = listPlayers.getPlayerWaitingTables(player)
+            total_waiting_tables += waiting
+        pair.setPairWaitingTables(total_waiting_tables)
+    return listPairs
+
+
+def getListOfSectionsCompleted(meeting_history_file, pre_schedule_file):
+    listPlayers = deconstructMeetingHistoryFile(meeting_history_file)
+    listPairs = deconstructRegisteredPairs(pre_schedule_file)
+    print(f'Total Num of Pairs: {len(listPairs.pairs)}')
+    listPairs = calcualteTotalRaitingsAndWaitingTables(listPairs, listPlayers)
+    listPairs.sortPairsByRating()
+    listPairs.setPairIds()
+    listSections = splitIntoSections(listPairs, 3)
+    listSections = createMeetingsMatrix(listSections, listPlayers, listPairs)
+    listSections = createWaitingTablesVector(listSections)
+    # printResults(listSections)
+    return listSections
