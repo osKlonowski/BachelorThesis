@@ -44,7 +44,6 @@ pre_schedule_file = 'bridge_schedules/data2021_pre_balanced/48 pairs_(3 sections
 # Example -- Basic Schedule File Header
 # number of pairs    number of tables    number of rounds    number of board groups    Individual=0
 # path_to_schedule = 'bridge_schedules/schedules/mpx-16-8-6-6-0.asc'
-
 # listRounds = decryptScheduleFile(path_to_schedule)
 
 # listOfPairMeetings = listRounds.getListOfPairMeetings()

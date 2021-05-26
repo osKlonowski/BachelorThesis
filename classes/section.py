@@ -4,10 +4,10 @@ import pandas as pd
 class Section:
     def __init__(self, pairs):
         self.pairs = pairs
-        self.listPairIds = []
+        self.listPairNums = []
 
-    def setListPairIds(self, list):
-        self.listPairIds = list
+    def setListPairNumbers(self, list):
+        self.listPairNums = list
 
     def assignMeetingsMatrix(self, matrix):
         self.meetings_matrix = matrix

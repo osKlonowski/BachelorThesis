@@ -81,18 +81,18 @@ import pandas as pd
 # # to compute the total number of previous meetings among them
 
 
-def getListOfPairIDs(pairs):
+def getListOfPairNums(pairs):
     list = []
     for pair in pairs:
-        list.append(pair.id)
+        list.append(pair.num)
     return list
 
 
-def pairsMeetingCount(listPairs, listPlayers, pair1id, pair2id):
+def pairsMeetingCount(listPairs, listPlayers, pair1num, pair2num):
     # Get pairs by id
-    pair1 = listPairs.getPairById(pair1id)
-    pair2 = listPairs.getPairById(pair2id)
-    if(pair1id == pair2id):
+    pair1 = listPairs.getPairByNum(pair1num)
+    pair2 = listPairs.getPairByNum(pair2num)
+    if(pair1num == pair2num):
         return 0
     # pair1 -> (A, B)
     a = listPlayers.getPlayerById(int(pair1.player1))
@@ -121,11 +121,11 @@ def printResults(listSections):
 def createMeetingsMatrix(listSections, listPlayers, listPairs):
     for section in listSections.sections:
         ##### MEETINGS MATRIX ##########
-        pairIds = getListOfPairIDs(section.pairs)
-        section.setListPairIds(pairIds)
+        pairNums = getListOfPairNums(section.pairs)
+        section.setListPairNumbers(pairNums)
         # GET List of Pair IDS for pd.DataFrame Construction
-        series_rows = pd.Series(section.listPairIds)
-        series_cols = pd.Series(section.listPairIds)
+        series_rows = pd.Series(section.listPairNums)
+        series_cols = pd.Series(section.listPairNums)
         # CREATE DATA-FRAME BASED ON COMBINED MEETINGS
         df = pd.DataFrame(series_rows.apply(
             lambda x: series_cols.apply(lambda y: pairsMeetingCount(listPairs, listPlayers, x, y))))
@@ -178,7 +178,7 @@ def getListOfSectionsCompleted(meeting_history_file, pre_schedule_file):
     listPairs.setPairNumbers()
     listPairs = calcualteTotalRaitingsAndWaitingTables(listPairs, listPlayers)
     listPairs.sortPairsByRating()
-    listPairs.setPairIds()
+    # listPairs.setPairIds()
     listSections = splitIntoSections(listPairs, 3)
     listSections = createMeetingsMatrix(listSections, listPlayers, listPairs)
     listSections = createWaitingTablesVector(listSections)

@@ -27,7 +27,12 @@ class ListOfPairs:
             list.append(pair.id)
         return list
 
-    def getPairById(self, idd):
+    def getPairByNum(self, num):
         for pair in self.pairs:
-            if(pair.id == idd):
+            if(pair.num == num):
                 return pair
+
+    # def getPairById(self, idd):
+    #     for pair in self.pairs:
+    #         if(pair.id == idd):
+    #             return pair
