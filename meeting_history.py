@@ -18,7 +18,7 @@ def split_user_record(user_record):
     rating = user[1]
     encounters = split_parts[1]
     meeting_history = [int(i) for i in encounters.split(',')]
-    num_waiting_tables = meeting_history.pop(0)
+    num_waiting_tables = meeting_history[0]
     player = Player(id_num, rating, meeting_history, num_waiting_tables)
     listPlayers.addPlayer(player)
 
@@ -40,18 +40,11 @@ def each_chunk(stream, separator):
                 yield part
 
 
-# with open(meeting_history_file) as myFile:
-#     for chunk in each_chunk(myFile, separator=']'):
-#         if(chunk != ''):
-#             split_user_record(chunk)
-
-# print(listPlayers.getNumOfPlayers())
-# listPlayers.sortPlayers()
-
-
 def deconstructMeetingHistoryFile(file):
     with open(meeting_history_file) as myFile:
         for chunk in each_chunk(myFile, separator=']'):
             if(chunk != ''):
                 split_user_record(chunk)
+    print(
+        f'Number of Players from Meeting History File: {len(listPlayers.players)}')
     return listPlayers

@@ -15,6 +15,12 @@ class ListOfPairs:
             pair.setPairId(i)
             i += 1
 
+    def setPairNumbers(self):
+        i = 1
+        for pair in self.pairs:
+            pair.setPairNum(i)
+            i += 1
+
     def getIDList(self):
         list = []
         for pair in self.pairs:

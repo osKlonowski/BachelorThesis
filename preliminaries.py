@@ -92,42 +92,23 @@ def pairsMeetingCount(listPairs, listPlayers, pair1id, pair2id):
     # Get pairs by id
     pair1 = listPairs.getPairById(pair1id)
     pair2 = listPairs.getPairById(pair2id)
-    if(pair1 == pair2):
+    if(pair1id == pair2id):
         return 0
     # pair1 -> (A, B)
-    a = listPlayers.getPlayerById(pair1.player1)
-    b = listPlayers.getPlayerById(pair1.player2)
+    a = listPlayers.getPlayerById(int(pair1.player1))
+    b = listPlayers.getPlayerById(int(pair1.player2))
     # pair2 -> (C, D)
-    c = listPlayers.getPlayerById(pair2.player1)
-    d = listPlayers.getPlayerById(pair2.player2)
+    c = listPlayers.getPlayerById(int(pair2.player1))
+    d = listPlayers.getPlayerById(int(pair2.player2))
     # SUM BELOW
     total = 0
-    ac = a.meeting_history[int(c.id)]
-    ad = a.meeting_history[int(d.id)]
-    bc = b.meeting_history[int(c.id)]
-    bd = b.meeting_history[int(d.id)]
+    # ac = a.meeting_history[c.id]
+    ac = a.getNumEncountersWith(c.id)
+    ad = a.getNumEncountersWith(d.id)
+    bc = b.getNumEncountersWith(c.id)
+    bd = b.getNumEncountersWith(d.id)
     total = ac + ad + bc + bd
     return total
-
-
-#### FOR EACH SECTION ####
-# for section in listSections.sections:
-#     ##### MEETINGS MATRIX ##########
-#     pairIds = getListOfPairIDs(section.pairs)
-#     section.setListPairIds(pairIds)
-#     # GET List of Pair IDS for pd.DataFrame Construction
-#     series_rows = pd.Series(section.listPairIds)
-#     series_cols = pd.Series(section.listPairIds)
-#     # CREATE DATA-FRAME BASED ON COMBINED MEETINGS
-#     df = pd.DataFrame(series_rows.apply(
-#         lambda x: series_cols.apply(lambda y: pairsMeetingCount(x, y))))
-#     df.index = series_rows
-#     df.columns = series_cols
-#     ### SET SECTION MATRIX ###
-#     section.assignMeetingsMatrix(df)
-#     ##### WAITING TABLES VECTOR #######
-#     vector = np.array([pair.total_waiting for pair in section.pairs])
-#     section.assignWaitingVector(vector)
 
 
 def printResults(listSections):
@@ -176,14 +157,15 @@ def splitIntoSections(listPairs, numOfSections):
 def calcualteTotalRaitingsAndWaitingTables(listPairs, listPlayers):
     for pair in listPairs.pairs:
         ratingSum = float(0.0)
-        for player in pair.players:
-            rating = listPlayers.getPlayerRating(player)
+        player1 = listPlayers.getPlayerById(int(pair.players[0]))
+        player2 = listPlayers.getPlayerById(int(pair.players[1]))
+        for player in [player1, player2]:
+            rating = listPlayers.getPlayerRating(player.id)
             ratingSum += float(rating)
         pair.setPairRating(ratingSum)
-    for pair in listPairs.pairs:
         total_waiting_tables = int(0)
-        for player in pair.players:
-            waiting = listPlayers.getPlayerWaitingTables(player)
+        for player in [player1, player2]:
+            waiting = listPlayers.getPlayerWaitingTables(int(player.id))
             total_waiting_tables += waiting
         pair.setPairWaitingTables(total_waiting_tables)
     return listPairs
@@ -193,11 +175,11 @@ def getListOfSectionsCompleted(meeting_history_file, pre_schedule_file):
     listPlayers = deconstructMeetingHistoryFile(meeting_history_file)
     listPairs = deconstructRegisteredPairs(pre_schedule_file)
     print(f'Total Num of Pairs: {len(listPairs.pairs)}')
+    listPairs.setPairNumbers()
     listPairs = calcualteTotalRaitingsAndWaitingTables(listPairs, listPlayers)
     listPairs.sortPairsByRating()
     listPairs.setPairIds()
     listSections = splitIntoSections(listPairs, 3)
     listSections = createMeetingsMatrix(listSections, listPlayers, listPairs)
     listSections = createWaitingTablesVector(listSections)
-    # printResults(listSections)
     return listSections
