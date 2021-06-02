@@ -14,3 +14,9 @@ class Section:
 
     def assignWaitingVector(self, vector):
         self.waiting_vector = vector
+
+    def setBestFitnessReached(self, best_fitness):
+        self.best_fitness = best_fitness
+
+    def setAssignments(self, assignments):
+        self.assignments = assignments

@@ -6,6 +6,7 @@ import Formigueiro as Formigueiro
 import random
 import operator
 import pandas as pd
+import time
 
 ### TAKES IN SCHEDULE_FILE ###
 ### ASSIGN PAIRS A PAIR ID ###
@@ -107,17 +108,24 @@ class BRIDGEInstance():
         # NUM is pair natural number
         # Component is tuple(id, num)
         register = dict(rest)
+        # print(f'Register: {register}')
+        # print(f'Next Assignment Attempted: ID: {id} to Pair NUM: {num}')
         if len(register) == 0:
             # This has to be the largest value possible
             # Ideal value is 0.01
             return 64
         else:
             cost = 0.01
+            # print(f'Checking against register...')
             for assignment in register.items():
                 assID = assignment[0]
                 assNum = assignment[1]
+                # print(f'Existing Assignment: ID: {assID} - NUM: {assNum}')
                 if(self.refMatrix[id][assID] != 0):
+                    # print(f'In Schedule ID: {assID} meets {id}')
                     cost += self.prev_meetings_matrix[num][assNum]
+                    # print(f'Cost of assignment {id} for Pair Num: {num}')
+            # print(f'Total Cost of Assignment: ID: {id} -- NUM: {num}')
             # print(f'Cost of this Pair Assignment is: {cost}')
             return cost
 
@@ -197,33 +205,9 @@ def computeTheoreticalNumberingMatrix(section, listOfRounds):
     return df
 
 
-listRounds = decryptScheduleFile(path_to_schedule)
-
-listOfSections = getListOfSectionsCompleted(
-    meeting_history_file, pre_schedule_file)
-section = listOfSections.sections[0]
-prev_meetings_matrix = section.meetings_matrix.copy()
-
-for pair in section.pairs:
-    print(f'Pair NUM: {pair.num} -- ID: {pair.id}')
-
-referenceMatrix = computeTheoreticalNumberingMatrix(section, listRounds)
-
-# GENERATE INSTANCE OF THE PROBLEM
-instance = BRIDGEInstance(section, prev_meetings_matrix,
-                          listRounds, referenceMatrix)
-
-# ANT-COLONY OPTIMIZATION
-# BEST FITNESS IN INTERATION ## GLOBAL BEST FITNESS ## BEST FITNESS FROM ALL ANTS
-print('BEST ITER FITNESS -- GLOBAL BEST FITNESS -- BEST ANT FITNESS')
-obj, components = Formigueiro.Solve(
-    antCls=BRIDGEAnt, instance=instance, numIterations=100, numAnts=15, alpha=1, beta=1)
-
-
-def compute_final_meeting_matrix_from_solution(meeting_matrix, assignments):
+def compute_final_meeting_matrix_from_solution(listRounds, meeting_matrix, assignments):
     # SOLUTION COMPONENTS IS LIST: [(id, num), (id, num)]
     sample_solution_matrix = meeting_matrix.copy()
-    # TODO: Maybe assign the register during intermediate solution checks
     register = dict(assignments)
     for round in listRounds.rounds:
         for meeting in round.getTablePairs():
@@ -236,7 +220,7 @@ def compute_final_meeting_matrix_from_solution(meeting_matrix, assignments):
     return sample_solution_matrix
 
 
-def getPairByNum(num):
+def getPairByNum(section, num):
     for pair in section.pairs:
         if pair.num == num:
             return pair
@@ -251,23 +235,76 @@ def getPairsFromNUM(assignments):
     return defin
 
 
-print(
-    f'THEORETICAL BEST FITNESS: {instance.fitness_best/instance.fitness_best}')
-print(f'Fitness Overhead: {obj}')
-print(
-    f'THEORETICAL WORST FITNESS: {instance.fitness_worst/instance.fitness_best}')
+def compute_all_sections():
+    listRounds = decryptScheduleFile(path_to_schedule)
+    listOfSections = getListOfSectionsCompleted(
+        meeting_history_file, pre_schedule_file)
+    for section in listOfSections.sections:
+        prev_meetings_matrix = section.meetings_matrix.copy()
+        referenceMatrix = computeTheoreticalNumberingMatrix(
+            section, listRounds)
+        # GENERATE INSTANCE OF THE PROBLEM
+        instance = BRIDGEInstance(
+            section, prev_meetings_matrix, listRounds, referenceMatrix)
+        obj, components = Formigueiro.Solve(
+            antCls=BRIDGEAnt, instance=instance, numIterations=1000, numAnts=22, alpha=1, beta=1)
+        section.setBestFitnessReached(obj)
+        res = components
+        res.sort(key=operator.itemgetter(0))
+        section.setAssignments(res)
+        print(
+            f'THEORETICAL BEST FITNESS: {instance.fitness_best/instance.fitness_best}')
+        print(f'Fitness Overhead: {obj}')
+        print(
+            f'THEORETICAL WORST FITNESS: {instance.fitness_worst/instance.fitness_best}')
+        res = components
+        res.sort(key=operator.itemgetter(0))
+        print(f'\nThe assignments are: {res}\n')
+    # Show Results
+    for section in listOfSections.sections:
+        print(f'Section Fitness: {section.best_fitness}')
+        print(f'Assignments: {section.assignments}')
+        final_matrix = compute_final_meeting_matrix_from_solution(
+            listRounds, section.meetings_matrix.copy(), section.assignments)
+        print(f'Final Matrix\n{final_matrix}')
 
-res = components
-res.sort(key=operator.itemgetter(0))
 
-print(
-    f'\nThe assignments are: {res}\n')
-print(f'PAIRS ARE: {getPairsFromNUM(res)}\n')
+start_time = time.time()
+compute_all_sections()
+print("--- %s seconds ---" % (time.time() - start_time))
+
+# def getPairByNum(num):
+#     for pair in section.pairs:
+#         if pair.num == num:
+#             return pair
+
+
+# def getPairsFromNUM(assignments):
+#     register = dict(assignments)
+#     defin = {}
+#     for ass in register.items():
+#         pair = getPairByNum(ass[1])
+#         defin[ass[0]] = (pair.player1, pair.player2)
+#     return defin
+
 
 # print(
-#     f'Num of Pair Numbers to Ids Assignments in Solution is: {len(components)}')
+#     f'THEORETICAL BEST FITNESS: {instance.fitness_best/instance.fitness_best}')
+# print(f'Fitness Overhead: {obj}')
+# print(
+#     f'THEORETICAL WORST FITNESS: {instance.fitness_worst/instance.fitness_best}')
 
-final_matrix = compute_final_meeting_matrix_from_solution(
-    prev_meetings_matrix, components)
-print(f'\nORIGINAL MATRIX\n{prev_meetings_matrix}')
-print(f'\n\nFINAL MATRIX\n{final_matrix}')
+# res = components
+# res.sort(key=operator.itemgetter(0))
+
+# print(
+#     f'\nThe assignments are: {res}\n')
+# print(f'PAIRS ARE: {getPairsFromNUM(res)}\n')
+
+# # print(
+# #     f'Num of Pair Numbers to Ids Assignments in Solution is: {len(components)}')
+
+# final_matrix = compute_final_meeting_matrix_from_solution(
+#     prev_meetings_matrix, components)
+# print(f'\nORIGINAL MATRIX\n{prev_meetings_matrix}')
+# print(f'\n\nFINAL MATRIX\n{final_matrix}')
