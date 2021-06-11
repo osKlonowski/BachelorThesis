@@ -141,6 +141,7 @@ def createWaitingTablesVector(listSections):
         ##### WAITING TABLES VECTOR #######
         vector = np.array([pair.total_waiting for pair in section.pairs])
         section.assignWaitingVector(vector)
+        print(f'Vector of Waiting Tables\n {vector}')
     return listSections
 
 
@@ -171,15 +172,15 @@ def calcualteTotalRaitingsAndWaitingTables(listPairs, listPlayers):
     return listPairs
 
 
-def getListOfSectionsCompleted(meeting_history_file, pre_schedule_file):
+def getListOfSectionsCompleted(meeting_history_file, pre_schedule_file, hasWaitingTable):
     listPlayers = deconstructMeetingHistoryFile(meeting_history_file)
     listPairs = deconstructRegisteredPairs(pre_schedule_file)
     print(f'Total Num of Pairs: {len(listPairs.pairs)}')
     listPairs.setPairNumbers()
     listPairs = calcualteTotalRaitingsAndWaitingTables(listPairs, listPlayers)
     listPairs.sortPairsByRating()
-    # listPairs.setPairIds()
     listSections = splitIntoSections(listPairs, 3)
+    if hasWaitingTable:
+        listSections = createWaitingTablesVector(listSections)
     listSections = createMeetingsMatrix(listSections, listPlayers, listPairs)
-    listSections = createWaitingTablesVector(listSections)
     return listSections

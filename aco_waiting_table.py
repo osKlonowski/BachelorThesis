@@ -27,16 +27,21 @@ import time
 
 class BRIDGEInstance():
     ##### FOR NOW ----> IT WILL BE ONLY ONE SECTION #####
-    def __init__(self, section, prev_meetings_matrix, listScheduleRounds, refMatrix):
+    def __init__(self, section, prev_meetings_matrix, prev_waiting_vector, listScheduleRounds, refMatrix):
+        self.section = section
         self.numRounds = len(listScheduleRounds.rounds)
         self.numPairs = len(section.pairs)
         self.pairs = section.pairs,
         self.pairNums = section.listPairNums
         self.listScheduleRounds = listScheduleRounds
         self.prev_meetings_matrix = prev_meetings_matrix
+        self.prev_waiting_vector = prev_waiting_vector
         self.refMatrix = refMatrix
-        self.fitness_best = self.get_theoretical_best_fitness()
-        self.fitness_worst = self.get_theoretical_worst_fitness()
+        self.fitness_best = self.compute_theoretical_best_fitness(
+            len(section.pairs) % 2 != 0, prev_meetings_matrix, prev_waiting_vector, len(listScheduleRounds.rounds))
+        self.fitness_worst = self.compute_theoretical_worst_fitness(
+            len(section.pairs) % 2 != 0, prev_meetings_matrix, prev_waiting_vector, len(listScheduleRounds.rounds))
+        self.hasWaitingTable = len(section.pairs) % 2 != 0
 
     def getPairNumbersSet(self):
         V = set([])
@@ -46,8 +51,12 @@ class BRIDGEInstance():
 
     def getIdsToBeAssignedSet(self):
         U = set([])
-        for id in range(1, self.numPairs+1):
-            U.add(id)
+        if self.hasWaitingTable:
+            for id in range(0, self.numPairs):
+                U.add(id)
+        else:
+            for id in range(1, self.numPairs+1):
+                U.add(id)
         return U
 
     def getMeetingMatrix(self):
@@ -61,7 +70,15 @@ class BRIDGEInstance():
                 meeting_factor += cell_value
         return meeting_factor
 
-    def compute_theoretical_best_meeting_matrix(self, meeting_history_matrix, numRounds):
+    def compute_waiting_factor(self, waiting_vector):
+        waiting_factor = 0
+        for val in waiting_vector:
+            waiting_factor += val ** 6
+        return waiting_factor
+
+    def compute_theoretical_best_fitness(self, hasWaitingTable, meeting_history_matrix, waiting_vector, numRounds):
+        meeting_factor = 0
+        waiting_factor = 0
         theoretical_optimum_matrix = meeting_history_matrix.copy()
         for pair_num in self.pairNums:
             for i in range(0, numRounds):
@@ -72,23 +89,22 @@ class BRIDGEInstance():
                     pair_id_least_meetings)] += 4
                 theoretical_optimum_matrix[int(
                     pair_id_least_meetings)][pair_num] += 4
-        fitness = self.compute_meeting_factor(theoretical_optimum_matrix)
-        print(f'\nTheoretical OPTIMUM Matrix: {fitness/fitness}')
-        print(theoretical_optimum_matrix)
-        return theoretical_optimum_matrix
-
-    def get_theoretical_best_fitness(self):
-        fitness = 0
-        if(self.numPairs % 2 == 0):
-            matrix = self.compute_theoretical_best_meeting_matrix(
-                self.prev_meetings_matrix, self.numRounds)
-            fitness = self.compute_meeting_factor(matrix)
-        else:
-            # TODO: Still need to do
-            pass
+        meeting_factor = self.compute_meeting_factor(
+            theoretical_optimum_matrix)
+        if hasWaitingTable:
+            theoretical_waiting_vector = waiting_vector.copy()
+            minVal = theoretical_waiting_vector.min()
+            index = list(theoretical_waiting_vector).index(minVal)
+            theoretical_waiting_vector[index] += 2
+            waiting_factor = self.compute_waiting_factor(
+                theoretical_waiting_vector)
+        fitness = meeting_factor + waiting_factor
+        print(f'\nTheoretical OPTIMUM Fitness: {fitness/fitness}')
         return fitness
 
-    def compute_theoretical_worst_meeting_matrix(self, meeting_history_matrix, numRounds):
+    def compute_theoretical_worst_fitness(self, hasWaitingTable, meeting_history_matrix, waiting_vector, numRounds):
+        meeting_factor = 0
+        waiting_factor = 0
         theoretical_worst_matrix = meeting_history_matrix.copy()
         for pair_num in self.pairNums:
             for i in range(0, numRounds):
@@ -99,20 +115,16 @@ class BRIDGEInstance():
                     pair_id_least_meetings)] += 4
                 theoretical_worst_matrix[int(
                     pair_id_least_meetings)][pair_num] += 4
-        fitness = self.compute_meeting_factor(theoretical_worst_matrix)
-        print(f'\nTheoretical WORST Matrix: {fitness/self.fitness_best}')
-        print(theoretical_worst_matrix)
-        return theoretical_worst_matrix
-
-    def get_theoretical_worst_fitness(self):
-        fitness = 0
-        if(self.numPairs % 2 == 0):
-            matrix = self.compute_theoretical_worst_meeting_matrix(
-                self.prev_meetings_matrix, self.numRounds)
-            fitness = self.compute_meeting_factor(matrix)
-        else:
-            # TODO: Still need to do
-            pass
+        meeting_factor = self.compute_meeting_factor(theoretical_worst_matrix)
+        if hasWaitingTable:
+            theoretical_waiting_vector = waiting_vector.copy()
+            minVal = theoretical_waiting_vector.max()
+            index = list(theoretical_waiting_vector).index(minVal)
+            theoretical_waiting_vector[index] += 2
+            waiting_factor = self.compute_waiting_factor(
+                theoretical_waiting_vector)
+        fitness = meeting_factor + waiting_factor
+        print(f'Theoretical WORST Matrix: {fitness/self.fitness_best}\n')
         return fitness
 
     def computePairAssignmentCost(self, id, num, rest):
@@ -120,18 +132,29 @@ class BRIDGEInstance():
         # NUM is pair natural number
         # Component is tuple(id, num)
         register = dict(rest)
-        # print(f'Register: {register}')
-        # print(f'Next Assignment Attempted: ID: {id} to Pair NUM: {num}')
+        print(f'Register: {register}')
+        print(f'Next Assignment Attempted: ID: {id} to Pair NUM: {num}')
+        # Ideal value is 0.01
         if len(register) == 0:
             # This has to be the largest value possible
-            # Ideal value is 0.01
-            return 64
+            return self.numPairs ** 3
+        elif id == 0:
+            cost = 0.01
+            print(f'Considering Waiting Table - for Pair {num}')
+            index = self.pairNums.index(num)
+            prev_num_waiting_tables = self.prev_waiting_vector[index]
+            cost = (prev_num_waiting_tables + 2) ** 6
+            print(f'Cost of waiting table assignment {cost}')
+            return cost
         else:
             cost = 0.01
             # print(f'Checking against register...')
-            for assignment in register.items():
+            rec = {key: val for key, val in register.items() if key != 0}
+            print(f'Without first element: {rec.items()}')
+            for assignment in rec.items():
                 assID = assignment[0]
                 assNum = assignment[1]
+                print(f'Checking with Ref Matrix: ID: {assID}, Num: {assNum}')
                 # print(f'Existing Assignment: ID: {assID} - NUM: {assNum}')
                 if(self.refMatrix[id][assID] != 0):
                     # print(f'In Schedule ID: {assID} meets {id}')
@@ -141,10 +164,11 @@ class BRIDGEInstance():
             # print(f'Cost of this Pair Assignment is: {cost}')
             return cost
 
-    # return a fitness value in range(1, 2)
     def compute_fitness(self, x):
+        print('COMPUTING FITNESS.....')
         # SOLUTION COMPONENTS IS LIST: [(id, num), (id, num)]
         sample_solution_matrix = self.prev_meetings_matrix.copy()
+        sample_waiting_vector = self.prev_waiting_vector.copy()
         register = dict(x)
         for round in self.listScheduleRounds.rounds:
             for meeting in round.getTablePairs():
@@ -154,8 +178,14 @@ class BRIDGEInstance():
                 sample_solution_matrix[pair1num][pair2num] += 4
                 sample_solution_matrix[pair2num][pair1num] += 4
         meeting_factor = self.compute_meeting_factor(sample_solution_matrix)
+        print(f'The Meeting Factor: {meeting_factor}')
+        # Get the index of the Pair Num that was assigned the waiting table
+        indexOfWaitingTableVictim = self.pairNums.index(register[0])
+        sample_waiting_vector[indexOfWaitingTableVictim] += 2
+        waiting_factor = self.compute_waiting_factor(sample_waiting_vector)
+        print(f'The Waiting Factor: {waiting_factor}')
         # Get overhead
-        return meeting_factor / self.fitness_best
+        return (meeting_factor + waiting_factor) / self.fitness_best
 
 
 class BRIDGEAnt(Formigueiro.ACS_Ant):
@@ -180,11 +210,15 @@ class BRIDGEAnt(Formigueiro.ACS_Ant):
         # Set of NUMS
         V = self.instance.getPairNumbersSet()
         U = self.instance.getIdsToBeAssignedSet()
+        print(f'Pair Nums: {V}')
+        print(f'IDs: {U}')
         L = set([])
         P = set([])
         while L != V:
             remaining_ids = [id for id in U - P]
+            print(f'Remaining List IDs: {remaining_ids}')
             id = random.choice(remaining_ids)
+            print(f'Picking {id}')
             P.add(id)
             components = [(id, num) for num in V - L]
             _, num = self.makeDecision(components)
@@ -192,7 +226,7 @@ class BRIDGEAnt(Formigueiro.ACS_Ant):
 
 
 meeting_history_file = 'bridge_schedules/data2021_pre_balanced/meeting history april 2021'
-pre_schedule_file = 'bridge_schedules/data2021_pre_balanced/48 pairs_(3 sections,no_waiting_table)'
+pre_schedule_waiting_table = 'bridge_schedules/data2021_pre_balanced/51pairs_(3_sections,_waiting table)'
 path_to_schedule = 'bridge_schedules/schedules/mpx-16-8-6-6-0.asc'
 
 
@@ -232,6 +266,15 @@ def compute_final_meeting_matrix_from_solution(listRounds, meeting_matrix, assig
     return sample_solution_matrix
 
 
+def compute_final_waiting_vector(pairNums, prev_waiting_vector, assignments):
+    sample = prev_waiting_vector.copy()
+    for id, num in assignments:
+        if(id == 0):
+            index = pairNums.index(num)
+            sample[index] += 2
+    return sample
+
+
 def getPairByNum(section, num):
     for pair in section.pairs:
         if pair.num == num:
@@ -250,16 +293,17 @@ def getPairsFromNUM(assignments):
 def compute_all_sections():
     listRounds = decryptScheduleFile(path_to_schedule)
     listOfSections = getListOfSectionsCompleted(
-        meeting_history_file, pre_schedule_file, False)
+        meeting_history_file, pre_schedule_waiting_table, True)
     for section in listOfSections.sections:
         prev_meetings_matrix = section.meetings_matrix.copy()
+        prev_waiting_vector = section.waiting_vector.copy()
         referenceMatrix = computeTheoreticalNumberingMatrix(
             section, listRounds)
         # GENERATE INSTANCE OF THE PROBLEM
         instance = BRIDGEInstance(
-            section, prev_meetings_matrix, listRounds, referenceMatrix)
+            section, prev_meetings_matrix, prev_waiting_vector, listRounds, referenceMatrix)
         obj, components = Formigueiro.Solve(
-            antCls=BRIDGEAnt, instance=instance, numIterations=1000, numAnts=22, alpha=1, beta=1)
+            antCls=BRIDGEAnt, instance=instance, numIterations=10, numAnts=10, alpha=1, beta=1)
         section.setBestFitnessReached(obj)
         res = components
         res.sort(key=operator.itemgetter(0))
@@ -278,7 +322,10 @@ def compute_all_sections():
         print(f'Assignments: {section.assignments}')
         final_matrix = compute_final_meeting_matrix_from_solution(
             listRounds, section.meetings_matrix.copy(), section.assignments)
+        final_waiting_vector = compute_final_waiting_vector(
+            section.listPairNums, section.waiting_vector, section.assignments)
         print(f'Final Matrix\n{final_matrix}')
+        print(f'Waiting Vector\n{final_waiting_vector}')
 
 
 start_time = time.time()
