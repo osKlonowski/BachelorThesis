@@ -132,29 +132,23 @@ class BRIDGEInstance():
         # NUM is pair natural number
         # Component is tuple(id, num)
         register = dict(rest)
-        print(f'Register: {register}')
-        print(f'Next Assignment Attempted: ID: {id} to Pair NUM: {num}')
         # Ideal value is 0.01
         if len(register) == 0:
             # This has to be the largest value possible
             return self.numPairs ** 3
         elif id == 0:
             cost = 0.01
-            print(f'Considering Waiting Table - for Pair {num}')
             index = self.pairNums.index(num)
             prev_num_waiting_tables = self.prev_waiting_vector[index]
             cost = (prev_num_waiting_tables + 2) ** 6
-            print(f'Cost of waiting table assignment {cost}')
             return cost
         else:
             cost = 0.01
             # print(f'Checking against register...')
             rec = {key: val for key, val in register.items() if key != 0}
-            print(f'Without first element: {rec.items()}')
             for assignment in rec.items():
                 assID = assignment[0]
                 assNum = assignment[1]
-                print(f'Checking with Ref Matrix: ID: {assID}, Num: {assNum}')
                 # print(f'Existing Assignment: ID: {assID} - NUM: {assNum}')
                 if(self.refMatrix[id][assID] != 0):
                     # print(f'In Schedule ID: {assID} meets {id}')
@@ -165,7 +159,6 @@ class BRIDGEInstance():
             return cost
 
     def compute_fitness(self, x):
-        print('COMPUTING FITNESS.....')
         # SOLUTION COMPONENTS IS LIST: [(id, num), (id, num)]
         sample_solution_matrix = self.prev_meetings_matrix.copy()
         sample_waiting_vector = self.prev_waiting_vector.copy()
@@ -178,12 +171,10 @@ class BRIDGEInstance():
                 sample_solution_matrix[pair1num][pair2num] += 4
                 sample_solution_matrix[pair2num][pair1num] += 4
         meeting_factor = self.compute_meeting_factor(sample_solution_matrix)
-        print(f'The Meeting Factor: {meeting_factor}')
         # Get the index of the Pair Num that was assigned the waiting table
         indexOfWaitingTableVictim = self.pairNums.index(register[0])
         sample_waiting_vector[indexOfWaitingTableVictim] += 2
         waiting_factor = self.compute_waiting_factor(sample_waiting_vector)
-        print(f'The Waiting Factor: {waiting_factor}')
         # Get overhead
         return (meeting_factor + waiting_factor) / self.fitness_best
 
@@ -210,15 +201,11 @@ class BRIDGEAnt(Formigueiro.ACS_Ant):
         # Set of NUMS
         V = self.instance.getPairNumbersSet()
         U = self.instance.getIdsToBeAssignedSet()
-        print(f'Pair Nums: {V}')
-        print(f'IDs: {U}')
         L = set([])
         P = set([])
         while L != V:
             remaining_ids = [id for id in U - P]
-            print(f'Remaining List IDs: {remaining_ids}')
             id = random.choice(remaining_ids)
-            print(f'Picking {id}')
             P.add(id)
             components = [(id, num) for num in V - L]
             _, num = self.makeDecision(components)
@@ -303,7 +290,7 @@ def compute_all_sections():
         instance = BRIDGEInstance(
             section, prev_meetings_matrix, prev_waiting_vector, listRounds, referenceMatrix)
         obj, components = Formigueiro.Solve(
-            antCls=BRIDGEAnt, instance=instance, numIterations=10, numAnts=10, alpha=1, beta=1)
+            antCls=BRIDGEAnt, instance=instance, numIterations=80, numAnts=12, alpha=1, beta=1)
         section.setBestFitnessReached(obj)
         res = components
         res.sort(key=operator.itemgetter(0))
