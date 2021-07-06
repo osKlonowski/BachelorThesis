@@ -427,7 +427,7 @@ def generateInputs(listOfSections):
     alpha_values = [0.1, 1, 2.1]
     beta_values = [1, 3.5]
     q_values = [0.6, 1]
-    rho_values = [0.1, 0.5, 1, 2]
+    rho_values = [0.1, 0.5, 0.8]
     for num_iter in num_iter_values:
         for num_ants in num_ants_values:
             for alpha in alpha_values:
@@ -440,13 +440,6 @@ def generateInputs(listOfSections):
                                               num_ants, round(alpha, 1), round(beta, 1), round(q, 1), round(rho, 1))
                                 inputs.append(tuple_args)
     # for alpha in np.arange(0.1, 3.1, 0.5):
-    #     for beta in np.arange(0.1, 3.1, 0.5):
-    #         for q in np.arange(0.1, 3.1, 0.5):
-    #             for section in listOfSections.sections:
-    #                 # section, num_iter, num_ants, alpha, beta, Q
-    #                 tuple_args = (section, 200,
-    #                               15, round(alpha, 1), round(beta, 1), round(q, 1))
-    #                 inputs.append(tuple_args)
     return inputs
 
 
