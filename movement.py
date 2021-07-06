@@ -19,6 +19,7 @@ def readRoundFromLine(columns):
 
 
 def decryptScheduleFile(path_to_file):
+    print(f'Using schedule file: {path_to_file}')
     # Open file
     file = open(path_to_file, 'r')
     # Read and ignore header lines

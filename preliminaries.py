@@ -1,3 +1,4 @@
+from divide_sections import splitIntoSections
 from meeting_history import deconstructMeetingHistoryFile
 from classes.list_of_players import ListOfPlayers
 from pre_schedule import deconstructRegisteredPairs
@@ -145,14 +146,14 @@ def createWaitingTablesVector(listSections):
     return listSections
 
 
-def splitIntoSections(listPairs, numOfSections):
-    listSections = ListOfSections()
-    # TODO: The number of sections here should be determined some other way???
-    result = np.array_split(listPairs.pairs, numOfSections)
-    for section in result:
-        print(f'Num Of Pairs in Section: {len(section)}')
-        listSections.addSection(Section(section))
-    return listSections
+# def splitIntoSections(listPairs, numOfSections):
+#     listSections = ListOfSections()
+#     # TODO: The number of sections here should be determined some other way???
+#     result = np.array_split(listPairs.pairs, numOfSections)
+#     for section in result:
+#         print(f'Num Of Pairs in Section: {len(section)}')
+#         listSections.addSection(Section(section))
+#     return listSections
 
 
 def calcualteTotalRaitingsAndWaitingTables(listPairs, listPlayers):
@@ -179,8 +180,15 @@ def getListOfSectionsCompleted(meeting_history_file, pre_schedule_file, hasWaiti
     listPairs.setPairNumbers()
     listPairs = calcualteTotalRaitingsAndWaitingTables(listPairs, listPlayers)
     listPairs.sortPairsByRating()
-    listSections = splitIntoSections(listPairs, 3)
+    listSections = splitIntoSections(listPairs.pairs, 3)
     if hasWaitingTable:
         listSections = createWaitingTablesVector(listSections)
     listSections = createMeetingsMatrix(listSections, listPlayers, listPairs)
     return listSections
+
+
+# meeting_history_file = 'bridge_schedules/data2021_pre_balanced/meeting history april 2021'
+# pre_schedule_file = 'bridge_schedules/data2021_pre_balanced/51pairs_(3_sections,_waiting table)'
+# # pre_schedule_file = 'bridge_schedules/data2021_pre_balanced/48 pairs_(3 sections,no_waiting_table)'
+# getListOfSectionsCompleted(
+#     meeting_history_file, pre_schedule_file, True)
