@@ -2,7 +2,7 @@ import pandas as pd
 
 
 class SolutionResult:
-    def __init__(self, fitness, time_taken, assignments, num_iter, num_ants, alpha, beta, Q):
+    def __init__(self, fitness, time_taken, assignments, num_iter, num_ants, alpha, beta, Q, rho):
         self.fitness = fitness
         self.time_taken = time_taken
         self.assignments = assignments
@@ -11,6 +11,7 @@ class SolutionResult:
         self.alpha = alpha
         self.beta = beta
         self.Q = Q
+        self.rho = rho
 
     def show(self):
         print('\n')
@@ -23,4 +24,4 @@ class SolutionResult:
         return [self.fitness, self.time_taken, self.num_iter, self.num_ants, self.alpha, self.beta, self.Q]
 
     def basic_params(self):
-        return [self.num_iter, self.num_ants, self.alpha, self.beta, self.Q]
+        return [self.num_iter, self.num_ants, self.alpha, self.beta, self.Q, self.rho]

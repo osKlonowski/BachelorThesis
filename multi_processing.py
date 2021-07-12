@@ -123,8 +123,8 @@ class BRIDGEInstance():
             waiting_factor = self.compute_waiting_factor(
                 theoretical_waiting_vector)
         theoretical_optimum_matrix = meeting_history_matrix.copy()
-        for pair_num in self.pairNums:
-            for _ in range(0, numRounds):
+        for _ in range(0, numRounds):
+            for pair_num in self.pairNums:
                 column = theoretical_optimum_matrix[[pair_num]].copy()
                 column.drop([pair_num], axis=0, inplace=True)
                 pair_id_least_meetings = column.idxmin()
@@ -151,8 +151,8 @@ class BRIDGEInstance():
             waiting_factor = self.compute_waiting_factor(
                 theoretical_waiting_vector)
         theoretical_worst_matrix = meeting_history_matrix.copy()
-        for pair_num in self.pairNums:
-            for _ in range(0, numRounds):
+        for _ in range(0, numRounds):
+            for pair_num in self.pairNums:
                 column = theoretical_worst_matrix[[pair_num]].copy()
                 column.drop([pair_num], axis=0, inplace=True)
                 pair_id_least_meetings = column.idxmax()
@@ -416,16 +416,16 @@ def compute_section(section, num_iter, num_ants, alpha, beta, Q, rho):
     # print(f'\nThe assignments are: {res}\n')
     elapsed = time.time()
     solution = SolutionResult(obj, elapsed - started,
-                              res, num_iter, num_ants, alpha, beta, Q)
+                              res, num_iter, num_ants, alpha, beta, Q, rho)
     return solution
 
 
 def generateInputs(listOfSections):
     inputs = []
-    num_iter_values = [50, 100, 250]
-    num_ants_values = [50, 25, 10]
+    num_iter_values = [5, 15, 50, 100, 250]
+    num_ants_values = [25, 10, 2]
     alpha_values = [0.1, 1, 2.1]
-    beta_values = [1, 3.5]
+    beta_values = [1, 3.6]
     q_values = [0.6, 1]
     rho_values = [0.1, 0.5, 0.8]
     for num_iter in num_iter_values:
@@ -439,7 +439,6 @@ def generateInputs(listOfSections):
                                 tuple_args = (section, num_iter,
                                               num_ants, round(alpha, 1), round(beta, 1), round(q, 1), round(rho, 1))
                                 inputs.append(tuple_args)
-    # for alpha in np.arange(0.1, 3.1, 0.5):
     return inputs
 
 
@@ -455,7 +454,7 @@ def construct_write_csv_result(res, time):
     data.append(get_avg_fitness(res))
     for solution in res:
         data.append(solution.fitness)
-    data.append(time)
+    data.append(solution.time_taken)
     for elem in res[0].basic_params():
         data.append(elem)
     write_result(data)
