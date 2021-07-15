@@ -390,7 +390,7 @@ def compute_all_sections():
 ########### VERY NEW WAYS ##############
 
 
-def compute_section(section, num_iter, num_ants, alpha, beta, Q, rho):
+def compute_section(section, num_iter, num_ants, alpha, beta, Q, rho, tau0, q0, phi):
     started = time.time()
     prev_meetings_matrix = section.meetings_matrix.copy()
     prev_waiting_vector = section.waiting_vector.copy()
@@ -401,7 +401,7 @@ def compute_section(section, num_iter, num_ants, alpha, beta, Q, rho):
     instance = BRIDGEInstance(
         section, prev_meetings_matrix, prev_waiting_vector, listRounds, referenceMatrix)
     obj, components = Formigueiro.Solve(
-        antCls=BRIDGEAnt, instance=instance, numIterations=num_iter, numAnts=num_ants, alpha=alpha, beta=beta, Q=Q, rho=rho)
+        antCls=BRIDGEAnt, instance=instance, numIterations=num_iter, numAnts=num_ants, alpha=alpha, beta=beta, Q=Q, rho=rho, tau0=tau0, q0=q0, phi=phi)
     section.setBestFitnessReached(obj)
     res = components
     res.sort(key=operator.itemgetter(1))
@@ -416,29 +416,45 @@ def compute_section(section, num_iter, num_ants, alpha, beta, Q, rho):
     # print(f'\nThe assignments are: {res}\n')
     elapsed = time.time()
     solution = SolutionResult(obj, elapsed - started,
-                              res, num_iter, num_ants, alpha, beta, Q, rho)
+                              res, num_iter, num_ants, alpha, beta, Q, rho, tau0, q0, phi)
     return solution
 
 
 def generateInputs(listOfSections):
     inputs = []
-    num_iter_values = [5, 15, 50, 100, 250]
-    num_ants_values = [25, 10, 2]
-    alpha_values = [0.1, 1, 2.1]
-    beta_values = [1, 3.6]
-    q_values = [0.6, 1]
-    rho_values = [0.1, 0.5, 0.8]
-    for num_iter in num_iter_values:
-        for num_ants in num_ants_values:
-            for alpha in alpha_values:
-                for beta in beta_values:
-                    for q in q_values:
-                        for rho in rho_values:
-                            for section in listOfSections.sections:
-                                # section, num_iter, num_ants, alpha, beta, Q
-                                tuple_args = (section, num_iter,
-                                              num_ants, round(alpha, 1), round(beta, 1), round(q, 1), round(rho, 1))
-                                inputs.append(tuple_args)
+    for section in listOfSections.sections:
+        # section, num_iter, num_ants, alpha, beta, Q
+        tuple_args = (section, 2000,
+                      30, 2.1, 3.6, 0.6, 0.2, 1, 0.5, 0.9)
+        inputs.append(tuple_args)
+    # # 500x Default with Iter=15 Ants=8
+    # for i in range(0, 150):
+    #     for section in listOfSections.sections:
+    #         # section, num_iter, num_ants, alpha, beta, Q
+    #         tuple_args = (section, 15,
+    #                       8, 1, 1, 1, 0.1, 1, 0.5, 0.9)
+    #         inputs.append(tuple_args)
+    # # 100x Default with Iter=150 Ants=20
+    # for i in range(0, 150):
+    #     for section in listOfSections.sections:
+    #         # section, num_iter, num_ants, alpha, beta, Q
+    #         tuple_args = (section, 150,
+    #                       20, 1, 1, 1, 0.1, 1, 0.5, 0.9)
+    #         inputs.append(tuple_args)
+    # # 500x Custom with Iter=15 Ants=8 Alpha=2.1 Beta=3.6 Q=0.6 p=0.2
+    # for i in range(0, 150):
+    #     for section in listOfSections.sections:
+    #         # section, num_iter, num_ants, alpha, beta, Q
+    #         tuple_args = (section, 15,
+    #                       8, 2.1, 3.6, 0.6, 0.2, 1, 0.5, 0.9)
+    #         inputs.append(tuple_args)
+    # # 100x Custom with Iter=150 Ants=20 Alpha=2.1 Beta=3.6 Q=0.6 p=0.2
+    # for i in range(0, 150):
+    #     for section in listOfSections.sections:
+    #         # section, num_iter, num_ants, alpha, beta, Q
+    #         tuple_args = (section, 150,
+    #                       20, 2.1, 3.6, 0.6, 0.2, 1, 0.5, 0.9)
+    #         inputs.append(tuple_args)
     return inputs
 
 
