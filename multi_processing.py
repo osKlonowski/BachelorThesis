@@ -178,8 +178,7 @@ class BRIDGEInstance():
         # Ideal value is 0.01
         if len(register) == 0:
             # This has to be the largest value possible or it doesn't matter
-            # TODO: Maybe try this 0.01
-            return self.numPairs ** 3
+            return self.numPairs ** 2
         elif num == 0:
             return self.getWaitingTablePenalty(id, num)
         else:
@@ -192,8 +191,8 @@ class BRIDGEInstance():
                 # print(f'Existing Assignment: ID: {assID} - NUM: {assNum}')
                 if(self.refMatrix[id][assID] != 0):
                     # print(f'In Schedule ID: {assID} meets {id}')
-                    # TODO: This should be to the power of 3
-                    cost += self.prev_meetings_matrix[num][assNum]
+                    penalty = self.prev_meetings_matrix[num][assNum] ** 3
+                    cost += penalty
                     # print(f'Cost of assignment {id} for Pair Num: {num}')
             # print(f'Total Cost of Assignment: ID: {id} -- NUM: {num}')
             # print(f'Cost of this Pair Assignment is: {cost}')
@@ -422,11 +421,16 @@ def compute_section(section, num_iter, num_ants, alpha, beta, Q, rho, tau0, q0, 
 
 def generateInputs(listOfSections):
     inputs = []
-    for section in listOfSections.sections:
-        # section, num_iter, num_ants, alpha, beta, Q
-        tuple_args = (section, 2000,
-                      30, 2.1, 3.6, 0.6, 0.2, 1, 0.5, 0.9)
-        inputs.append(tuple_args)
+    q_values = [0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8]
+    p_values = [0.1, 0.3, 0.5, 0.7, 0.9]
+    for i in range(0, 10):
+        for q in q_values:
+            for p in p_values:
+                for section in listOfSections.sections:
+                    # section, num_iter, num_ants, alpha, beta, Q
+                    tuple_args = (section, 50,
+                                  10, 1, 1, q, p, 1, 0.5, 0.9)
+                    inputs.append(tuple_args)
     # # 500x Default with Iter=15 Ants=8
     # for i in range(0, 150):
     #     for section in listOfSections.sections:
